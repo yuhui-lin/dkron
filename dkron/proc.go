@@ -69,6 +69,7 @@ func (a *AgentCommand) invokeJob(job *Job, execution *Execution) error {
 
 func (a *AgentCommand) selectServer() serf.Member {
 	servers := a.listServers()
+	log.WithField("servers", servers).Warn("**************** proc: select servers")
 	server := servers[rand.Intn(len(servers))]
 
 	return server
