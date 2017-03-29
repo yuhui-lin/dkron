@@ -456,7 +456,9 @@ func (a *AgentCommand) leaderMember() (*serf.Member, error) {
 func (a *AgentCommand) listServers() []serf.Member {
 	members := []serf.Member{}
 
+	log.WithField("members", a.serf.Members()).Warn("**************** serf members")
 	for _, member := range a.serf.Members() {
+		log.WithField("member", member.Name).Warn("**************** current serf member")
 		if key, ok := member.Tags["dkron_server"]; ok {
 			if key == "true" && member.Status == serf.StatusAlive {
 				members = append(members, member)
@@ -640,6 +642,9 @@ func (a *AgentCommand) setExecution(payload []byte) *Execution {
 // of the current member.
 // in marathon, it would return the host's IP and advertise RPC port
 func (a *AgentCommand) getRPCAddr() string {
+	log.WithField("members", a.serf.Members()).Warn("**************** serf members getRPCAddr")
+	log.WithField("members", a.serf.LocalMember().Name).Warn("**************** serf local member")
+
 	bindIp := a.serf.LocalMember().Addr
 
 	return fmt.Sprintf("%s:%d", bindIp, a.config.AdvertiseRPCPort)
