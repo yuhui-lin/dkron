@@ -18,18 +18,45 @@ services:
     hostname: node1
     command: agent -server -bootstrap -client=0.0.0.0
 
-  zk:
+  # zk:
+  #   image: zookeeper
+  #   ports:
+  #     - "2181"
+  #   hostname: node1
+
+  zoo1:
     image: zookeeper
+    restart: always
     ports:
-      - "2181"
-    hostname: node1
+        - 2181:2181
+    environment:
+        ZOO_MY_ID: 1
+        ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=zoo2:2888:3888 server.3=zoo3:2888:3888
+
+  zoo2:
+    image: zookeeper
+    restart: always
+    ports:
+        - 2182:2181
+    environment:
+        ZOO_MY_ID: 2
+        ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=zoo2:2888:3888 server.3=zoo3:2888:3888
+
+  zoo3:
+    image: zookeeper
+    restart: always
+    ports:
+        - 2183:2181
+    environment:
+        ZOO_MY_ID: 3
+        ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=zoo2:2888:3888 server.3=zoo3:2888:3888
 
   dkron:
     build: .
     depends_on:
       - consul
       - etcd
-      - zk
+      - zoo1
     ports:
       - "8080"
     volumes:
@@ -39,6 +66,6 @@ services:
     # Uncomment to use consul
     #command: scripts/entrypoint.sh agent -server -backend=consul -backend-machine=consul:8500 -join=dkron:8946 -log-level=debug
     # Uncomment to use etcd
-    # command: scripts/entrypoint.sh agent -server -backend=etcd -backend-machine=etcd:2379 -join=dkron:8946 -log-level=debug
+    command: scripts/entrypoint.sh agent -server -backend=etcd -backend-machine=etcd:2379 -join=dkron:8946 -log-level=debug
     # Uncomment to use zk
-    command: scripts/entrypoint.sh agent -server -backend=zk -backend-machine=zk:2181 -join=dkron:8946 -log-level=debug
+    # command: scripts/entrypoint.sh agent -server -backend=zk -backend-machine=zoo1:2181 -join=dkron:8946 -log-level=debug

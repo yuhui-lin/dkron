@@ -1,0 +1,59 @@
+version: "3"
+services:
+  consul0:
+    image: progrium/consul
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    command: -server -bootstrap-expect 3
+
+  consul1:
+    image: progrium/consul
+    networks:
+      - backend
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    command: -server -join consul0
+
+  dkron-consul0:
+    image: dkron/dkron
+    command: agent -server -bind=0.0.0.0:8946 -backend=consul -backend-machine=consul0:8500 -join=dkron-consul0:8946 -dog-statsd-addr=dd-agent:8125 -log-level=debug
+    networks:
+      - backend
+    ports:
+      - 8090:8080
+    labels: [beta="0"]
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  dkron-consul:
+    image: dkron/dkron
+    command: agent -server -bind=0.0.0.0:8946 -backend=consul -backend-machine=consul0:8500 -join=dkron-consul0:8946 -dog-statsd-addr=dd-agent:8125 -log-level=debug
+    networks:
+      - backend
+    ports:
+      - 8091:8080
+    labels: [beta="0"]
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
